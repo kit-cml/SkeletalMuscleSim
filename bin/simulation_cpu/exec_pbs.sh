@@ -1,4 +1,4 @@
-#PBS -N epsim_pbs_job
+#PBS -N skeletalmusclesim_pbs_job
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=20000:00:00
 #PBS -e stderr.log
@@ -30,16 +30,16 @@ RESULT_FOLDER="./results"
 
 
 # choose the binary based on the value of cell_model
-if [[ $CELL_MODEL == *"CiPAORdv1.0"* ]]; then
-  BINARY_FILE=epsim_CiPAORdv1.0
-elif [[ $CELL_MODEL == *"ToR-ORd"* ]]; then
-  BINARY_FILE=epsim_ToR-ORd
-elif [[ $CELL_MODEL == *"ToR-ORd-dynCl"* ]]; then
-  BINARY_FILE=epsim_ToR-ORd-dynCl
-elif [[ $CELL_MODEL == *"ORd-static-Brugada-Dongguk"* ]]; then
-  BINARY_FILE=epsim_ORd-static-Brugada-Dongguk
-elif [[ $CELL_MODEL == *"ORd-static"* ]]; then
-  BINARY_FILE=epsim_ORd-static
+if [[ $CELL_MODEL == *"Shorten"* ]]; then
+  BINARY_FILE=../skeletalmusclesim_Shorten
+#elif [[ $CELL_MODEL == *"ToR-ORd"* ]]; then
+#  BINARY_FILE=../epsim_ToR-ORd
+#elif [[ $CELL_MODEL == *"ToR-ORd-dynCl"* ]]; then
+#  BINARY_FILE=../epsim_ToR-ORd-dynCl
+#elif [[ $CELL_MODEL == *"ORd-static-Brugada-Dongguk"* ]]; then
+#  BINARY_FILE=../epsim_ORd-static-Brugada-Dongguk
+#elif [[ $CELL_MODEL == *"ORd-static"* ]]; then
+#  BINARY_FILE=../epsim_ORd-static
 else
   echo "The cell model ${CELL_MODEL} is not specified to any simulations!!"
   exit 1

@@ -56,7 +56,7 @@ int skeletal_muscle_bench(const Parameter *p_param)
   if( strstr(cell_model,"endo") != NULL ) cell_type = 0;
   else if( strstr(cell_model,"epi") != NULL ) cell_type = 1;
   else if( strstr(cell_model,"myo") != NULL ) cell_type = 2;
-  mpi_printf(cml::commons::MASTER_NODE,"Using %s cell model with cell_type=%hd\n", cell_model, cell_type);
+  mpi_printf(cml::commons::MASTER_NODE,"Using %s cell model\n", cell_model);
 
   p_cell = new shorten_ocallaghan_davidson_soboleva_2007();
   p_cell->initConsts();
