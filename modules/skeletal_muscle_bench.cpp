@@ -36,6 +36,9 @@ int skeletal_muscle_bench(const Parameter *p_param)
   const double stimulus_duration = p_param->stimulus_duration;
   const double stimulus_amplitude_scale = p_param->stimulus_amplitude_scale;
   const double gna_scale = p_param->gna_scale;
+  const double gk_scale = p_param->gk_scale;
+  const double gk1_scale = p_param->gk1_scale;
+  const double gcl_scale = p_param->gcl_scale;
 
   if(time_step_min > writing_step){
     mpi_printf(cml::commons::MASTER_NODE,"%s\n%s\n",
@@ -60,8 +63,12 @@ int skeletal_muscle_bench(const Parameter *p_param)
 
   p_cell = new shorten_ocallaghan_davidson_soboleva_2007();
   p_cell->initConsts();
-  
-  p_cell->CONSTANTS[g_Na] *= gna_scale;
+ 
+  // apply user input conductance scale 
+  p_cell->CONSTANTS[g_Na_bar] *= gna_scale;
+  p_cell->CONSTANTS[g_K_bar] *= gk_scale;
+  p_cell->CONSTANTS[g_Cl_bar] *= gcl_scale;
+  p_cell->CONSTANTS[G_K] *= gk1_scale;
 
   // variables for I/O
   char buffer[255];
