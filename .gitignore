@@ -1,5 +1,5 @@
 *.csv
-bin/skeletalmusclesim-Shorten
+bin/skeletalmusclesim_Shorten
 results/
 *.o
 *.log
