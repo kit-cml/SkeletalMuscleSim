@@ -48,8 +48,8 @@ int skeletal_muscle_bench(const Parameter *p_param)
   else if(number_pacing_write >= number_pacing){
     number_pacing_write = number_pacing;
     mpi_printf(cml::commons::MASTER_NODE,"%s\n%s\n",
-    "WARNING!!! The number_pacing_write is larger than the number_pacing",
-    "All period will be printed");
+    "WARNING!!! The number_pacing_write is equal to or larger than the number_pacing",
+    "All paces will be printed");
   }
 
   // this is the cellmodel initialization part
@@ -71,8 +71,8 @@ int skeletal_muscle_bench(const Parameter *p_param)
  
   // apply user input conductance scale 
   p_cell->CONSTANTS[g_Na_bar] *= gna_scale;
-  p_cell->CONSTANTS[g_K_bar] *= gk_scale;
   p_cell->CONSTANTS[g_Cl_bar] *= gcl_scale;
+  p_cell->CONSTANTS[g_K_bar] *= gk_scale;
   p_cell->CONSTANTS[G_K] *= gk1_scale;
 
   // variables for I/O
@@ -93,10 +93,37 @@ int skeletal_muscle_bench(const Parameter *p_param)
     return 1;
   }
   
-  fprintf(fp_time_series,"%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-      "Time(ms)","vS(mV)","dvS/dt(mV/ms)","vT(mV)","dvT/dt(mV/ms)",
-      "I_HH(mA_per_cm2)","I_Cl(mA_per_cm2)","I_IR(mA_per_cm2)","I_DR(mA_per_cm2)","I_Na(mA_per_cm2)","I_NaK(mA_per_cm2)",
-      "I_Cl_t(mA_per_cm2)","I_IR_t(mA_per_cm2)","I_DR_t(mA_per_cm2)","I_Na_t(mA_per_cm2)","I_NaK_t(mA_per_cm2)");
+  // Write header to the time-series result file.
+  // (the main function for this task is write_csv_header )
+  static const char *time_series_headers[] = {
+    "Time(ms)","vS(mV)","dvS/dt(mV/ms)","vT(mV)","dvT/dt(mV/ms)",
+    "Ca_1(nM)","Ca_2(nM)",
+    "Ca_SR1(nM)","Ca_SR2(nM)",
+    "Ca_T_2(nM)","Ca_CaT2(nM)",
+    "I_HH(mA_per_cm2)","I_T(mA_per_cm2)",
+    "I_Na(mA_per_cm2)","I_Na_t(mA_per_cm2)",
+    "I_Cl(mA_per_cm2)","I_Cl_t(mA_per_cm2)",
+    "I_IR(mA_per_cm2)","I_IR_t(mA_per_cm2)",
+    "I_DR(mA_per_cm2)","I_DR_t(mA_per_cm2)",
+    "I_NaK(mA_per_cm2)","I_NaK_t(mA_per_cm2)",
+    "m(INa-activation)", "m_t(time-delayed-INa-activation)",
+    "h(INa-inactivation)", "h_t(time-delayed-INa-inactivation)",
+    "n(IDR-activation)", "n_t(time-delayed-IDR-activation)",
+    "h_K(IDR-inactivation)", "h_K_t(time-delayed-IDR-inactivation)",
+    "S(IT-activation)", "S_t(time-delayed-IT-activation)",
+    "D_0(Ito-closed)","D_1(Ito-open-partial)","D_2(Ito-open)",
+    "A_1(Ito-auxiliary-repol)", "A_2(Ito-auxiliary-recovery)",
+    "C_0(Calcium-closed-resting)","C_1(Calcium-closed-intermediate)",
+    "C_2(Calcium-closed-intermediate)","C_3(Calcium-closed-intermediate)",
+    "C_4(Calcium-closed-full)",
+    "O_0(Calcium-open)","O_1(Calcium-open)",
+    "O_2(Calcium-open)","O_3(Calcium-open)",
+    "O_4(Calcium-open)",
+  };
+  size_t n_time_series_headers =
+    sizeof(time_series_headers) / sizeof(time_series_headers[0]);
+  write_csv_header(fp_time_series, time_series_headers, n_time_series_headers);
+
 
   double time_step = time_step_min;
   double tcurr = 0.;
@@ -162,12 +189,33 @@ int skeletal_muscle_bench(const Parameter *p_param)
     if( tcurr >= next_output_time - cml::math::EPSILON ){
       // relative time since writing began
       tprint = next_output_time - start_time;
-      snprintf(buffer, sizeof(buffer),
-          "%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf\n",
-          p_cell->STATES[vS],p_cell->RATES[vS],p_cell->STATES[vT],p_cell->RATES[vT],
-          p_cell->ALGEBRAIC[I_HH],p_cell->ALGEBRAIC[I_Cl],p_cell->ALGEBRAIC[I_IR],p_cell->ALGEBRAIC[I_DR],p_cell->ALGEBRAIC[I_Na],p_cell->ALGEBRAIC[I_NaK],
-          p_cell->ALGEBRAIC[I_Cl_t],p_cell->ALGEBRAIC[I_IR_t],p_cell->ALGEBRAIC[I_DR_t],p_cell->ALGEBRAIC[I_Na_t],p_cell->ALGEBRAIC[I_NaK_t]);
-      fprintf(fp_time_series, "%.4lf,%s", tprint, buffer);
+      // Write time-series result to the file.
+      // (the main function for this task is write_csv_time_series_row )
+      double row_values[] = {
+        tprint, p_cell->STATES[vS],p_cell->RATES[vS],p_cell->STATES[vT],p_cell->RATES[vT],
+        p_cell->STATES[Ca_1],p_cell->STATES[Ca_2],p_cell->STATES[Ca_SR1],p_cell->STATES[Ca_SR2],
+        p_cell->STATES[Ca_T_2],p_cell->STATES[Ca_CaT2],
+        p_cell->ALGEBRAIC[I_HH],p_cell->ALGEBRAIC[I_T],
+        p_cell->ALGEBRAIC[I_Na],p_cell->ALGEBRAIC[I_Na_t],
+        p_cell->ALGEBRAIC[I_Cl],p_cell->ALGEBRAIC[I_Cl_t],
+        p_cell->ALGEBRAIC[I_IR],p_cell->ALGEBRAIC[I_IR_t],
+        p_cell->ALGEBRAIC[I_DR],p_cell->ALGEBRAIC[I_DR_t],
+        p_cell->ALGEBRAIC[I_NaK],p_cell->ALGEBRAIC[I_NaK_t],
+        p_cell->STATES[m], p_cell->STATES[m_t],
+        p_cell->STATES[h], p_cell->STATES[h_t],
+        p_cell->STATES[n], p_cell->STATES[n_t],
+        p_cell->STATES[h_K], p_cell->STATES[h_K_t],
+        p_cell->STATES[S], p_cell->STATES[S_t],
+        p_cell->STATES[D_0], p_cell->STATES[D_1],p_cell->STATES[D_2],
+        p_cell->STATES[A_1],p_cell->STATES[A_2],
+        p_cell->STATES[C_0], p_cell->STATES[C_1],p_cell->STATES[C_2],
+        p_cell->STATES[C_3],p_cell->STATES[C_4],
+        p_cell->STATES[O_0], p_cell->STATES[O_1],p_cell->STATES[O_2],
+        p_cell->STATES[O_3],p_cell->STATES[O_4],
+      };
+      size_t n_row_values = sizeof(row_values) / sizeof(row_values[0]);
+      write_csv_time_series_row(fp_time_series, row_values, n_row_values);
+
       // schedule next output
       next_output_time += writing_step;
     }
